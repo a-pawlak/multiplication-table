@@ -29,20 +29,25 @@ class Task {
 }
 
 class App {
-  field1: HTMLSpanElement;
-  field2: HTMLSpanElement;
-  inputField: HTMLInputElement;
-  form: HTMLFormElement;
-  statsInfoHard: HTMLDivElement;
-  statsInfoEasy: HTMLDivElement;
-  levelElement: HTMLElement;
+  private field1: HTMLSpanElement;
+  private field2: HTMLSpanElement;
+  private inputField: HTMLInputElement;
+  private form: HTMLFormElement;
+  private statsInfoHard: HTMLDivElement;
+  private statsInfoEasy: HTMLDivElement;
+  private levelElement: HTMLElement;
+  // private multiplicationEL: HTMLSpanElement;
+  // private divisionEL: HTMLSpanElement;
+  private operatorEL: HTMLSpanElement;
+  private operationWrapperEL: HTMLDialogElement;
   num1 = 0;
   num2 = 0;
-  result = 0;
-  correctResultsHard = 0;
-  correctResultsEasy = 0;
+  private result = 0;
+  private correctResultsHard = 0;
+  private correctResultsEasy = 0;
   level: any;
-  formActive: boolean = true;
+  private operation: boolean = true;
+  private formActive: boolean = true;
 
   constructor() {
     this.field1 = document.querySelector('.first-number')!;
@@ -51,7 +56,9 @@ class App {
     this.form = document.querySelector('form')!;
     this.statsInfoHard = document.querySelector('.stats-info--hard')!;
     this.statsInfoEasy = document.querySelector('.stats-info--easy')!;
-    this.levelElement = document.querySelector('.level')!;
+    this.levelElement = document.querySelector('.level-wrapper')!;
+    this.operatorEL = document.querySelector('.operator')!;
+    this.operationWrapperEL = document.querySelector('.operation')!;
 
     this.correctResultsHard = this.getStats()[1] ?? 0;
 
@@ -63,18 +70,32 @@ class App {
 
     this.level = Level.getInstance();
     this.levelListener();
+    this.operationListener();
   }
 
   renderTask(args: number[]) {
     this.inputField.value = '';
     const [number1, number2, result] = args;
-    this.field1.textContent = number1 + '';
-    this.field2.textContent = number2 + '';
-    this.num1 = number1;
-    this.num2 = number2;
-    this.result = result;
-
-    this.inputField.focus();
+    if (this.operation) {
+      this.operatorEL.textContent = '×';
+      this.num1 = number1;
+      this.num2 = number2;
+      this.result = result;
+      this.field1.textContent = this.num1 + '';
+      this.field2.textContent = this.num2 + '';
+      this.inputField.focus();
+      return;
+    }
+    if (!this.operation) {
+      this.operatorEL.textContent = ':';
+      this.num1 = number1;
+      this.num2 = result;
+      this.result = number2;
+      this.field1.textContent = this.num2 + '';
+      this.field2.textContent = this.num1 + '';
+      this.inputField.focus();
+      return;
+    }
   }
   listenForResults() {
     this.form.addEventListener('submit', this.manageTask.bind(this));
@@ -149,10 +170,26 @@ class App {
     this.levelElement
       .querySelectorAll('.icon')
       .forEach(e => e.classList.remove('level-active'));
-    console.log(element);
 
     element.closest('.icon')!.classList.add('level-active');
     element.closest('.hard') ? Level.setLevel(11) : Level.setLevel(7);
+    this.renderTask(new Task().newTask);
+  }
+  operationListener() {
+    this.operationWrapperEL.addEventListener(
+      'click',
+      this.operationManage.bind(this)
+    );
+  }
+  operationManage(e: Event) {
+    e.preventDefault();
+    const element = e.target as HTMLElement;
+    if (!element.closest('.operation-btn')) return;
+    this.operationWrapperEL
+      .querySelectorAll('.operation-btn')
+      .forEach(el => el.classList.remove('operation-active'));
+    element.classList.add('operation-active');
+    this.operation ? (this.operation = false) : (this.operation = true);
     this.renderTask(new Task().newTask);
   }
 }
